@@ -1,0 +1,228 @@
+{
+ "rmse_base": 76.63628852602493,
+ "ablation": {
+  "génération seulement": {
+   "rmse": 76.60635269105272,
+   "ecart": -0.029935834972206976,
+   "ic95": [
+    -0.06809194793178648,
+    0.007262061015823906
+   ]
+  },
+  "candidates proches seulement": {
+   "rmse": 76.32125284092336,
+   "ecart": -0.315035685101563,
+   "ic95": [
+    -0.3672990738359701,
+    -0.25929039329325254
+   ]
+  },
+  "toutes": {
+   "rmse": 76.26525198886594,
+   "ecart": -0.3710365371589859,
+   "ic95": [
+    -0.42469232296689585,
+    -0.3163823863075191
+   ]
+  }
+ },
+ "par_age": {
+  "< 24 ans": {
+   "lignes": 39928,
+   "rmse_base": 72.05532306485354,
+   "rmse_corrigee": 71.98219961228337
+  },
+  "24-34 ans": {
+   "lignes": 24622,
+   "rmse_base": 81.61564055044366,
+   "rmse_corrigee": 81.37357808854519
+  },
+  "35-49 ans": {
+   "lignes": 13619,
+   "rmse_base": 81.48943041515281,
+   "rmse_corrigee": 80.53830302465666
+  },
+  "50 ans et plus": {
+   "lignes": 5831,
+   "rmse_base": 73.6042236477984,
+   "rmse_corrigee": 72.10389668760276
+  }
+ },
+ "pentes": {
+  "equip_bw10": {
+   "1–3": {
+    "pente": 0.2036097286460674,
+    "lignes": 3131
+   },
+   "4–10": {
+    "pente": 0.12292040446411678,
+    "lignes": 9672
+   },
+   "11–50": {
+    "pente": 0.05216742757350293,
+    "lignes": 26948
+   },
+   "> 50": {
+    "pente": 0.003272513616978925,
+    "lignes": 27594
+   }
+  },
+  "equip_bw5_an3": {
+   "1–3": {
+    "pente": 0.3132658024073298,
+    "lignes": 1542
+   },
+   "4–10": {
+    "pente": 0.2055656566562647,
+    "lignes": 5324
+   },
+   "11–50": {
+    "pente": 0.08657683068997779,
+    "lignes": 19544
+   },
+   "> 50": {
+    "pente": 0.009362716217571456,
+    "lignes": 24526
+   }
+  },
+  "equip_bw3_fed": {
+   "1–3": {
+    "pente": 0.35856592727789,
+    "lignes": 1030
+   },
+   "4–10": {
+    "pente": 0.20956829223816395,
+    "lignes": 3528
+   },
+   "11–50": {
+    "pente": 0.0816076508729846,
+    "lignes": 13807
+   },
+   "> 50": {
+    "pente": 0.010810357336777248,
+    "lignes": 19093
+   }
+  },
+  "equip_bw2_an1": {
+   "1–3": {
+    "pente": 0.4659666511735448,
+    "lignes": 671
+   },
+   "4–10": {
+    "pente": 0.2663555766109082,
+    "lignes": 2233
+   },
+   "11–50": {
+    "pente": 0.08660538931511405,
+    "lignes": 9949
+   },
+   "> 50": {
+    "pente": 0.02951586495179334,
+    "lignes": 16860
+   }
+  }
+ },
+ "exemples": {
+  "succès (68 ans)": {
+   "ligne": {
+    "Age": 68.0,
+    "BodyweightKg": 92.6,
+    "Equipment": "Single-ply",
+    "Federation": "EPA",
+    "MeetYear": 2019,
+    "TotalKg": 672.5
+   },
+   "melange": 518.0440652010734,
+   "corrigee": 582.3489853875549,
+   "candidates_meme_equipement_poids_10_pourcent": [
+    {
+     "Age": 58.0,
+     "BodyweightKg": 91.9,
+     "Equipment": "Single-ply",
+     "Federation": "EPA",
+     "MeetYear": 2009,
+     "TotalKg": 690.0
+    },
+    {
+     "Age": 60.0,
+     "BodyweightKg": 92.5,
+     "Equipment": "Single-ply",
+     "Federation": "BP",
+     "MeetYear": 2012,
+     "TotalKg": 712.5
+    },
+    {
+     "Age": 64.0,
+     "BodyweightKg": 92.7,
+     "Equipment": "Single-ply",
+     "Federation": "BP",
+     "MeetYear": 2016,
+     "TotalKg": 702.5
+    }
+   ]
+  },
+  "échec (54 ans)": {
+   "ligne": {
+    "Age": 54.0,
+    "BodyweightKg": 122.9,
+    "Equipment": "Wraps",
+    "Federation": "USPA",
+    "MeetYear": 2026,
+    "TotalKg": 645.0
+   },
+   "melange": 735.7824277816577,
+   "corrigee": 810.3432290291113,
+   "candidates_meme_equipement_poids_10_pourcent": [
+    {
+     "Age": 53.0,
+     "BodyweightKg": 124.0,
+     "Equipment": "Wraps",
+     "Federation": "USPA",
+     "MeetYear": 2025,
+     "TotalKg": 872.5
+    },
+    {
+     "Age": 54.0,
+     "BodyweightKg": 124.74,
+     "Equipment": "Wraps",
+     "Federation": "IPA",
+     "MeetYear": 2026,
+     "TotalKg": 907.5
+    }
+   ]
+  }
+ },
+ "taille_reservoir_test_interne": {
+  "rmse_base": 76.50463231031925,
+  "33600": {
+   "gains": [
+    -0.3230471822980263,
+    -0.2068532710398756,
+    -0.17327648527842143
+   ],
+   "moyenne": -0.2343923128721078
+  },
+  "50400": {
+   "gains": [
+    -0.4426522023605912,
+    -0.4965225681364558,
+    -0.42068694574494714
+   ],
+   "moyenne": -0.4532872387473314
+  },
+  "67200": {
+   "gains": [
+    -0.58334558760113,
+    -0.581240561745318,
+    -0.6051863896977494
+   ],
+   "moyenne": -0.5899241796813991
+  },
+  "84000": {
+   "gains": [
+    -0.6751847397657258
+   ],
+   "moyenne": -0.6751847397657258
+  }
+ }
+}

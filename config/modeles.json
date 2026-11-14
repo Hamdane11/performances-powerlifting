@@ -1,0 +1,294 @@
+{
+ "_lisez_moi": "Paramètres de tous les modèles. Les noms des modèles sont ceux des fichiers predictions/<nom>.npz.",
+ "variables": [
+  "Age",
+  "BodyweightKg",
+  "MeetYear",
+  "Sex",
+  "Equipment",
+  "AgeClass",
+  "BirthYearClass",
+  "WeightClassKg",
+  "Tested",
+  "Country",
+  "State",
+  "Federation",
+  "ParentFederation",
+  "MeetCountry",
+  "MeetState",
+  "Sanctioned"
+ ],
+ "modeles": {
+  "lightgbm": {
+   "name": "extra_trees",
+   "features": {
+    "precision_travel": true
+   },
+   "params": {
+    "objective": "regression",
+    "metric": "rmse",
+    "n_estimators": 5000,
+    "learning_rate": 0.04,
+    "n_jobs": 2,
+    "random_state": 44,
+    "verbosity": -1,
+    "deterministic": true,
+    "force_col_wise": true,
+    "max_cat_to_onehot": 4,
+    "reg_lambda": 10.0,
+    "reg_alpha": 0.1,
+    "colsample_bytree": 1.0,
+    "subsample": 1.0,
+    "subsample_freq": 0,
+    "cat_smooth": 40.0,
+    "cat_l2": 10.0,
+    "num_leaves": 127,
+    "min_child_samples": 30,
+    "max_depth": -1,
+    "extra_trees": true
+   },
+   "exponent": 0.0,
+   "threads": 2,
+   "patience": 180,
+   "best_iteration": 513
+  },
+  "lightgbm_p067": {
+   "name": "extra_trees_p067",
+   "features": {
+    "precision_travel": true
+   },
+   "params": {
+    "objective": "regression",
+    "metric": "rmse",
+    "n_estimators": 5000,
+    "learning_rate": 0.04,
+    "n_jobs": 2,
+    "random_state": 44,
+    "verbosity": -1,
+    "deterministic": true,
+    "force_col_wise": true,
+    "max_cat_to_onehot": 4,
+    "reg_lambda": 10.0,
+    "reg_alpha": 0.1,
+    "colsample_bytree": 1.0,
+    "subsample": 1.0,
+    "subsample_freq": 0,
+    "cat_smooth": 40.0,
+    "cat_l2": 10.0,
+    "num_leaves": 127,
+    "min_child_samples": 30,
+    "max_depth": -1,
+    "extra_trees": true
+   },
+   "exponent": 0.6666666666666666,
+   "threads": 2,
+   "patience": 180,
+   "best_iteration": 536
+  },
+  "lightgbm_meilleure": {
+   "name": "lightgbm_meilleure",
+   "features": {
+    "precision_travel": true
+   },
+   "params": {
+    "objective": "regression",
+    "metric": "rmse",
+    "n_estimators": 8000,
+    "learning_rate": 0.02,
+    "n_jobs": 2,
+    "random_state": 44,
+    "verbosity": -1,
+    "deterministic": true,
+    "force_col_wise": true,
+    "max_cat_to_onehot": 4,
+    "reg_lambda": 30.0,
+    "reg_alpha": 0.1,
+    "colsample_bytree": 0.9,
+    "subsample": 1.0,
+    "subsample_freq": 0,
+    "cat_smooth": 10.0,
+    "cat_l2": 10.0,
+    "num_leaves": 15,
+    "min_child_samples": 10,
+    "max_depth": -1,
+    "extra_trees": true
+   },
+   "exponent": 0.0,
+   "threads": 2,
+   "patience": 150,
+   "best_iteration": 3974
+  },
+  "catboost": {
+   "context": true,
+   "exponent": 1.0,
+   "patience": 250,
+   "params": {
+    "iterations": 6500,
+    "depth": 7,
+    "learning_rate": 0.06,
+    "l2_leaf_reg": 8.0,
+    "loss_function": "RMSE",
+    "eval_metric": "RMSE",
+    "max_ctr_complexity": 2,
+    "counter_calc_method": "SkipTest",
+    "random_seed": 314,
+    "thread_count": 2,
+    "allow_writing_files": false,
+    "task_type": "CPU",
+    "used_ram_limit": "2gb"
+   },
+   "name": "cat_context_p1_d7",
+   "best_iteration": 3150
+  },
+  "tabm": {
+   "seed": 326,
+   "threads": 2,
+   "device": "auto",
+   "embedding": "pwl",
+   "n_bins": 64,
+   "d_embedding": 16,
+   "k": 32,
+   "n_blocks": 3,
+   "d_block": 384,
+   "dropout": 0.1,
+   "lr": 0.001,
+   "weight_decay": 0.0003,
+   "exponent": 0.0,
+   "batch_size": 512,
+   "max_epochs": 160,
+   "patience": 20,
+   "min_category_count": 10,
+   "normalization": "standard",
+   "features": "engineered",
+   "name": "tabm_gpu_pwl384",
+   "epochs": 40
+  },
+  "tabm_allom": {
+   "seed": 326,
+   "threads": 2,
+   "device": "auto",
+   "embedding": "pwl",
+   "n_bins": 32,
+   "d_embedding": 16,
+   "k": 16,
+   "n_blocks": 2,
+   "d_block": 256,
+   "dropout": 0.1,
+   "lr": 0.002,
+   "weight_decay": 0.0003,
+   "exponent": 0.6666666666666666,
+   "batch_size": 512,
+   "max_epochs": 160,
+   "patience": 20,
+   "min_category_count": 10,
+   "normalization": "standard",
+   "features": "engineered",
+   "name": "tabm_gpu_pwl_allom",
+   "epochs": 22
+  },
+  "tabpfn_ancien": {
+   "package_version": "9.1.0",
+   "model_version": "V3_5",
+   "n_estimators": 4,
+   "device": "cuda",
+   "fit_mode": "fit_preprocessors",
+   "memory_saving_mode": true,
+   "n_preprocessing_jobs": 1,
+   "random_state": 2026,
+   "inference_config": {
+    "SUBSAMPLE_SAMPLES": null
+   },
+   "output_type": "mean",
+   "query_chunk_rows": 1000,
+   "categorical_features_indices": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "age_below_five_as_missing": true,
+   "checkpoint_name": "tabpfn-v3.5-20260909.safetensors",
+   "checkpoint_sha256": "ece4d67eadfea42eb0e610df5189bea60cb7f31073d81e9c7a019b76eacf0be3",
+   "checkpoint_repo_revision": "06bf2ba35c80a92a3b9abb436b99cf49e7a0365e"
+  },
+  "tabpfn": {
+   "package_version": "9.1.0",
+   "model_version": "V3_5",
+   "n_estimators": 8,
+   "random_state": 2026,
+   "exposant": 0.6666666666666666,
+   "remarque": "8 passages, cible divisée par (poids/80)^(2/3) ; voir 2_modeles_gpu.ipynb"
+  },
+  "hgbr": {
+   "graines": [
+    2026,
+    2027,
+    2028,
+    2029,
+    2030
+   ],
+   "remarque": "src/powerlifting/models/hgbr_cohortes.py"
+  },
+  "lgbm54": {
+   "graine": 2026,
+   "remarque": "src/powerlifting/models/hgbr_cohortes.py"
+  },
+  "ridge": {
+   "alpha": 100.0,
+   "exposant": 1.0,
+   "remarque": "1_modeles_cpu.py"
+  }
+ },
+ "graines_lightgbm_5": [
+  44,
+  1,
+  2,
+  3,
+  4
+ ],
+ "melange_v5": {
+  "_lisez_moi": "Premier mélange de six modèles (poids figés, choisis en octobre).",
+  "modeles": [
+   "lightgbm",
+   "lightgbm_p067",
+   "catboost",
+   "tabm",
+   "tabm_allom",
+   "tabpfn_ancien"
+  ],
+  "poids": [
+   0.05711523828652316,
+   0.06743717328766306,
+   0.15130184963234936,
+   0.12877599970998194,
+   0.052900744152824405,
+   0.5424689949306581
+  ]
+ },
+ "solution_finale": {
+  "modeles": [
+   "lightgbm_5graines",
+   "lightgbm_p067_5graines",
+   "catboost",
+   "tabm",
+   "tabm_allom",
+   "tabpfn",
+   "hgbr_5graines",
+   "lgbm54"
+  ],
+  "alpha_profils_identiques": 0.75,
+  "rarete": {
+   "seuil": 20,
+   "lignes_reference": 67200
+  }
+ }
+}

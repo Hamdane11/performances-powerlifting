@@ -1,0 +1,13 @@
+{
+ "avec la variable de contexte": {
+  "rmse_validation": 78.18026213733668,
+  "arbres": 3150,
+  "minutes": 17.34466629823049
+ },
+ "sans la variable de contexte": {
+  "rmse_validation": 78.29994168338597,
+  "arbres": 2940,
+  "minutes": 14.517066729068755
+ },
+ "gain_de_la_variable": 0.11967954604928366
+}

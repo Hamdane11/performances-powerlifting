@@ -1,0 +1,51 @@
+{
+ "essais": 61,
+ "min": 77.80638054492367,
+ "max": 78.91181539422738,
+ "ecart_type": 0.26426232425980956,
+ "mediane_avec_70_pourcent_des_lignes": 78.54163514181931,
+ "mediane_sans_sous_echantillonnage": 78.15946857875355,
+ "meilleure_configuration": {
+  "num_leaves": 15,
+  "min_child_samples": 10,
+  "reg_lambda": 30.0,
+  "colsample_bytree": 0.9,
+  "subsample": 1.0,
+  "extra_trees": true,
+  "cat_smooth": 10.0,
+  "exponent": 0.0
+ },
+ "meilleure_taux_002": {
+  "num_leaves": 15,
+  "min_child_samples": 10,
+  "reg_lambda": 30.0,
+  "colsample_bytree": 0.9,
+  "subsample": 1.0,
+  "extra_trees": true,
+  "cat_smooth": 10.0,
+  "exponent": 0.0,
+  "taux": 0.02,
+  "arbres": 3974,
+  "rmse_validation": 77.80044669286056,
+  "secondes": 335.23361992836
+ },
+ "depart_taux_002": {
+  "num_leaves": 127,
+  "min_child_samples": 30,
+  "reg_lambda": 10.0,
+  "colsample_bytree": 1.0,
+  "subsample": 1.0,
+  "extra_trees": true,
+  "cat_smooth": 40.0,
+  "exponent": 0.0,
+  "taux": 0.02,
+  "arbres": 1035,
+  "rmse_validation": 77.9444507641494,
+  "secondes": 369.749724149704
+ },
+ "validation_croisee": {
+  "meilleure_taux_002": 78.10031994614536,
+  "depart_taux_002": 78.11261971717661,
+  "depart_taux_004": 78.22927416500983
+ }
+}

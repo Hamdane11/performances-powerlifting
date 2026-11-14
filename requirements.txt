@@ -1,0 +1,10 @@
+# Versions avec lesquelles tout le dépôt a été exécuté (Python 3.13, processeur).
+numpy==2.5.3
+pandas==3.0.5
+scipy==1.18.1
+scikit-learn==1.9.1
+threadpoolctl
+lightgbm==4.7.0
+catboost==1.2.10
+xgboost-cpu==3.4.1   # même bibliothèque que xgboost, sans les dépendances CUDA
+matplotlib==3.11.2

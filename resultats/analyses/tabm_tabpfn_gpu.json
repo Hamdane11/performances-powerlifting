@@ -1,0 +1,34 @@
+{
+ "tabpfn_pli1": {
+  "allom": {
+   "1": 77.45898715799649,
+   "2": 77.31571522808628,
+   "4": 77.15613166800951,
+   "8": 77.13777807143056,
+   "16": 77.09039202775769
+  },
+  "kg": {
+   "4": 77.24760576592242,
+   "8": 77.20713698528296
+  }
+ },
+ "tabpfn_gains": {
+  "de 1 à 4 passages": 0.30285548998698175,
+  "de 4 à 16 passages": 0.06573964025182022,
+  "cible ramenée, 4 passages": 0.09147409791290784,
+  "cible ramenée, 8 passages": 0.06935891385239756
+ },
+ "tabm_recherche": {
+  "configurations": 17,
+  "min": 77.76920052927733,
+  "max": 78.23004112417713,
+  "configuration_de_depart": 77.76920052927733,
+  "meilleure": "tabm_ref"
+ },
+ "tabm_reentraine": {
+  "validation_croisee": 78.2367194704057,
+  "validation_croisee_colonne_du_melange": 78.12461084558866,
+  "test_interne": 79.03854143328029,
+  "test_interne_colonne_du_melange": 78.15735630901011
+ }
+}

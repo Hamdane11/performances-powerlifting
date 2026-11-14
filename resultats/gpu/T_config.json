@@ -1,0 +1,23 @@
+{
+ "seed": 326,
+ "threads": 2,
+ "device": "auto",
+ "embedding": "pwl",
+ "n_bins": 64,
+ "d_embedding": 16,
+ "k": 32,
+ "n_blocks": 3,
+ "d_block": 384,
+ "dropout": 0.1,
+ "lr": 0.001,
+ "weight_decay": 0.0003,
+ "exponent": 0.0,
+ "batch_size": 512,
+ "max_epochs": 160,
+ "patience": 20,
+ "min_category_count": 10,
+ "normalization": "standard",
+ "features": "engineered",
+ "name": "tabm_ref",
+ "epochs": 38
+}

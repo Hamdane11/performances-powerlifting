@@ -1,0 +1,36 @@
+{
+ "lignes": {
+  "train": 105000,
+  "test": 45000
+ },
+ "part_hommes": 0.69,
+ "age_median": 25.0,
+ "poids_median": 81.4,
+ "categories_de_poids": 146,
+ "equipement": {
+  "Raw": 0.6213,
+  "Single-ply": 0.2259,
+  "Wraps": 0.1195,
+  "Multi-ply": 0.0232,
+  "Unlimited": 0.0102
+ },
+ "part_controlee": 0.7621,
+ "federations": 399,
+ "annees": [
+  1966,
+  2026
+ ],
+ "part_region_inconnue": 0.6375,
+ "valeurs_manquantes": 0,
+ "ages_inferieurs_a_5": 18,
+ "part_ages_en_demi": 0.4817,
+ "region_inconnue_hors_usa": 0.9448,
+ "region_inconnue_usa": 0.2759,
+ "colonnes_par_modele": {
+  "Ridge": 16,
+  "TabPFN": 16,
+  "LightGBM": 32,
+  "CatBoost": 36,
+  "TabM": 24
+ }
+}

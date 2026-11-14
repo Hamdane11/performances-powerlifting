@@ -1,0 +1,184 @@
+{
+ "tableau_1": {
+  "Moyenne générale": {
+   "rmse": 171.33823451800933,
+   "r2": -8.900570828140886e-06
+  },
+  "Moyenne par sexe": {
+   "rmse": 128.2534648421001,
+   "r2": 0.43968338130538487
+  },
+  "Moyenne par sexe et catégorie de poids": {
+   "rmse": 105.45235489184448,
+   "r2": 0.6212018446791446
+  },
+  "Moyenne par sexe, équipement et catégorie de poids": {
+   "rmse": 100.33042194421053,
+   "r2": 0.6571054616673504
+  },
+  "Notre solution finale": {
+   "rmse": 76.26525198886594,
+   "r2": 0.8018706980670672
+  }
+ },
+ "tableau_2": {
+  "Ridge (p = 1)": {
+   "validation_croisee": 83.93379578688732,
+   "test_interne": 83.80766773470137
+  },
+  "CatBoost": {
+   "validation_croisee": 78.39691750938097,
+   "test_interne": 78.32471212856294
+  },
+  "LightGBM, configuration de départ": {
+   "validation_croisee": 78.22927416500983,
+   "test_interne": 78.09675185663859
+  },
+  "LightGBM, meilleure configuration": {
+   "validation_croisee": 78.10031994614536,
+   "test_interne": 77.97778067110015
+  },
+  "LightGBM, configuration de départ, 5 graines": {
+   "validation_croisee": 78.07356201710223,
+   "test_interne": 77.88531663362845
+  },
+  "HistGradientBoosting, 5 graines": {
+   "validation_croisee": 78.25784877123296,
+   "test_interne": 78.01162482371029
+  },
+  "TabM": {
+   "validation_croisee": 78.12461084558866,
+   "test_interne": 78.15735630901011
+  },
+  "TabPFN (8 passages, cible ramenée)": {
+   "validation_croisee": 76.93801620340635,
+   "test_interne": 76.77880019240929
+  }
+ },
+ "tabpfn_4_passages_cible_kg_validation_croisee": 77.0783550122758,
+ "melanges": {
+  "v5, six modèles, poids réajustés, validation imbriquée": 76.76057666746739,
+  "solution finale, huit modèles, poids rare/fréquent, validation imbriquée": 76.65499098541278,
+  "poids de TabPFN : profils rares / fréquents": [
+   0.6768321809491361,
+   0.5069540959011841
+  ],
+  "gain du mélange sur TabPFN seul (validation imbriquée)": {
+   "ecart": -0.2830252179935684,
+   "ic95": [
+    -0.3346139913267653,
+    -0.2329464827640433
+   ]
+  },
+  "gain du mélange sur TabPFN seul, par pli": [
+   0.261,
+   0.324,
+   0.403,
+   0.199,
+   0.228
+  ]
+ },
+ "tableau_4": {
+  "TabPFN seul": {
+   "avant": 76.90954639576486,
+   "apres": 76.54544659596733,
+   "gain": {
+    "ecart": -0.36409979979752904,
+    "ic95": [
+     -0.4199461639221706,
+     -0.3079195176999953
+    ]
+   },
+   "gain_par_pli": [
+    0.402,
+    0.406,
+    0.342,
+    0.267,
+    0.402
+   ]
+  },
+  "Mélange avec l'ancienne version de TabPFN": {
+   "avant": 76.68613263366433,
+   "apres": 76.29281168495513,
+   "gain": {
+    "ecart": -0.39332094870920287,
+    "ic95": [
+     -0.44811633760840375,
+     -0.33853397128024454
+    ]
+   },
+   "gain_par_pli": [
+    0.454,
+    0.453,
+    0.339,
+    0.299,
+    0.42
+   ]
+  },
+  "Mélange retenu": {
+   "avant": 76.63628852602493,
+   "apres": 76.26525198886594,
+   "gain": {
+    "ecart": -0.3710365371589859,
+    "ic95": [
+     -0.42700802314807296,
+     -0.3150100774685122
+    ]
+   },
+   "gain_par_pli": [
+    0.421,
+    0.417,
+    0.326,
+    0.296,
+    0.394
+   ]
+  }
+ },
+ "tableau_5": {
+  "TabPFN seul": {
+   "validation_croisee": 76.93801620340635,
+   "test_interne": 76.77880019240929,
+   "public": 76.42075
+  },
+  "TabPFN + correction par appariement": {
+   "validation_croisee": 76.54544659596733,
+   "test_interne": 76.07576668187932,
+   "public": 75.86197
+  },
+  "Mélange + correction par appariement (solution finale)": {
+   "validation_croisee": 76.26525198886594,
+   "test_interne": 75.82944757055353,
+   "public": 75.65106
+  }
+ },
+ "test_interne": {
+  "mélange avant correction": 76.50463231031925,
+  "gain du mélange sur TabPFN seul": {
+   "ecart": -0.2741678820900404,
+   "ic95": [
+    -0.37995523942623244,
+    -0.17474868956138256
+   ]
+  },
+  "gain de la correction": {
+   "ecart": -0.6751847397657258,
+   "ic95": [
+    -0.801340110320891,
+    -0.5506283859666695
+   ]
+  },
+  "solution finale moins TabPFN seul": {
+   "ecart": -0.9493526218557662,
+   "ic95": [
+    -1.1099499647420128,
+    -0.786427417456008
+   ]
+  }
+ },
+ "public": {
+  "tabpfn_seul.csv": 76.42075,
+  "tabpfn_appariement.csv": 75.86197,
+  "solution_finale.csv": 75.65106,
+  "solution_finale_reservoir_105000.csv": 75.6504
+ }
+}

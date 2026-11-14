@@ -1,0 +1,93 @@
+{
+ "rmse_melange": 76.74893050171332,
+ "correlations_des_erreurs": {
+  "min": 0.9574568339560413,
+  "max": 0.9898682588119408
+ },
+ "ecart_type_moyen_entre_modeles_kg": 10.894240793709047,
+ "erreur_absolue_moyenne_kg": 58.505310431142014,
+ "part_somme_carres_des_5_pourcent_pires_lignes": 0.34983878284070064,
+ "erreurs_superieures_a_2_rmse": {
+  "part_des_lignes": 0.050404761904761904,
+  "part_ou_les_6_modeles_se_trompent_dans_le_meme_sens": 1.0,
+  "meme_part_sur_toutes_les_lignes": 0.8297023809523809,
+  "verification_borne": true
+ },
+ "exemple_trois_athletes": [
+  {
+   "age": 28.0,
+   "poids": 107.5,
+   "total": 777.5,
+   "predictions_des_6_modeles": [
+    614.5,
+    612.5,
+    612.3,
+    634.5,
+    615.9,
+    613.2
+   ]
+  },
+  {
+   "age": 27.0,
+   "poids": 111.9,
+   "total": 617.5,
+   "predictions_des_6_modeles": [
+    622.8,
+    635.5,
+    659.9,
+    627.7,
+    653.7,
+    641.4
+   ]
+  },
+  {
+   "age": 30.5,
+   "poids": 112.9,
+   "total": 237.5,
+   "predictions_des_6_modeles": [
+    629.3,
+    634.5,
+    640.2,
+    632.4,
+    617.2,
+    632.5
+   ]
+  }
+ ],
+ "pente_total_sur_prediction": {
+  "lightgbm": 0.9966488775697169,
+  "lightgbm_p067": 0.9944516946314493,
+  "catboost": 0.9974234734482778,
+  "tabm": 1.0062563950892625,
+  "tabm_allom": 1.0104791142682876,
+  "tabpfn_ancien": 1.0044441711898966
+ },
+ "krogh_vedelsby": {
+  "moyenne_ponderee_des_erreurs_quadratiques": 6015.335919916523,
+  "dispersion": 124.9375867597157,
+  "erreur_quadratique_du_melange": 5890.3983331568215,
+  "verification": 5890.398333156808
+ },
+ "bates_granger_avec_tabpfn": {
+  "lightgbm": {
+   "correlation": 0.9700966541301244,
+   "rapport_des_rmse": 0.9862998368561618
+  },
+  "lightgbm_p067": {
+   "correlation": 0.9680890787929012,
+   "rapport_des_rmse": 0.9853955070060891
+  },
+  "catboost": {
+   "correlation": 0.968072387601379,
+   "rapport_des_rmse": 0.9845120842766834
+  },
+  "tabm": {
+   "correlation": 0.9717882300277273,
+   "rapport_des_rmse": 0.9877175676166449
+  },
+  "tabm_allom": {
+   "correlation": 0.9672057655000064,
+   "rapport_des_rmse": 0.983067130008309
+  }
+ }
+}

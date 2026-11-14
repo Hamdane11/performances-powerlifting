@@ -1,0 +1,451 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\frenchsetup{StandardItemLabels=true}
+\usepackage{lmodern,microtype}
+\usepackage[margin=20mm,headheight=15pt,headsep=7mm,footskip=10mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,tabularx,graphicx,lastpage}
+\usepackage{xcolor,fancyhdr,titlesec,enumitem}
+\usepackage[unicode,colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black,citecolor=blue!45!black]{hyperref}
+\definecolor{navy}{HTML}{18364B}
+\hypersetup{pdftitle={Prédire le total en force athlétique}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{navy}Prédire le total en force athlétique}
+\fancyhead[R]{\small H. Tchani Yacoubou, S. Thibault}
+\fancyfoot[C]{\small\thepage\,/\,\pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlength{\emergencystretch}{2em}
+\titleformat{\section}{\large\bfseries\color{navy}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{navy}}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{8pt}{3pt}
+\titlespacing*{\subsection}{0pt}{5pt}{2pt}
+\setlist{nosep,leftmargin=1.4em,topsep=2pt}
+\setlist[itemize]{label=\textbullet}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\kg}{\,kg}
+\newcounter{fig}
+\newcommand{\reportfig}[4][\linewidth]{\begin{center}\includegraphics[width=#1]{figures/#2}\refstepcounter{fig}\label{#3}\par{\small\textbf{Figure~\thefig.} #4\par}\end{center}\vspace{-6pt}}
+\newenvironment{tableau}{\par\smallskip\noindent\begin{minipage}{\linewidth}\centering}{\end{minipage}\par\smallskip}
+\newcounter{tab}
+\newcommand{\legende}[2]{\refstepcounter{tab}\label{#1}{\small\textbf{Tableau~\thetab.} #2\par}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries\color{navy}Prédire le total en force athlétique}\par
+\vspace{3pt}
+{\large Modèles individuels, erreurs communes et correction par appariement}\par
+\vspace{5pt}
+Hamdane Tchani Yacoubou et Solène Thibault\par
+{\small Master 2 Mathématiques et IA, Université Paris-Saclay. Apprentissage supervisé, challenge de régression.}\par
+{\small Code : \href{https://github.com/Hamdane11/performances-powerlifting}{github.com/Hamdane11/performances-powerlifting}}
+\end{center}
+
+\noindent\textbf{Résumé.} Nous prédisons le total soulevé en compétition de force athlétique à partir de
+16 variables décrivant l'athlète et la compétition. Nous étudions d'abord quatre familles de modèles
+(régression Ridge, boosting d'arbres, réseau TabM, modèle préentraîné TabPFN) et le choix de leurs
+réglages ; le meilleur, TabPFN, atteint 76,94\kg{} de RMSE en validation croisée. Tous les modèles se
+trompent sur les mêmes athlètes et dans le même sens, ce qui explique pourquoi les combiner rapporte peu
+(0,3\kg). Nous proposons alors une \emph{correction par appariement} : pour chaque ligne, nous
+cherchons dans les données étiquetées les participations qui ont de bonnes chances d'être celles du même
+athlète, et un modèle de second niveau corrige la prédiction à partir de leurs totaux. Appliquée à notre
+mélange de modèles, elle réduit l'erreur de 0,37\kg{} en validation croisée imbriquée et de 0,68\kg{} sur un
+test interne de 21\,000 lignes. Notre solution finale obtient 76,27\kg{} en validation croisée, 75,83\kg{}
+sur le test interne et 75,65\kg{} sur le classement public.
+
+% =====================================================================
+\section{Le problème}\label{sec:probleme}
+
+\subsection{Données et métrique}
+Chaque ligne décrit la participation d'un athlète à une compétition complète (squat, développé couché,
+soulevé de terre). La cible \code{TotalKg} est la somme des meilleurs essais réussis. Nous disposons de
+105\,000 lignes étiquetées et devons prédire 45\,000 lignes de test. La métrique est la racine de
+l'erreur quadratique moyenne,
+\[
+\mathrm{RMSE} = \Big(\tfrac1n \textstyle\sum_{i=1}^n (y_i - \hat y_i)^2\Big)^{1/2},
+\]
+en kilogrammes. Le classement public de Kaggle porte sur environ 30\,\% du test, le classement final sur
+les 70\,\% restants.
+
+Les 16 variables explicatives sont de trois types :
+\begin{itemize}
+\item \textbf{l'athlète} : sexe (69\,\% d'hommes), âge (médiane 25 ans), poids de corps (médiane 81\kg),
+pays et région, tranches d'âge et d'année de naissance ;
+\item \textbf{la catégorie} : catégorie de poids (146 modalités, car les fédérations n'ont pas les mêmes),
+équipement (\emph{Raw} 62\,\%, \emph{Single-ply} 23\,\%, \emph{Wraps} 12\,\%, \emph{Multi-ply} 2\,\%),
+contrôle antidopage (76\,\% de compétitions contrôlées) ;
+\item \textbf{la compétition} : fédération (399 modalités), fédération de tutelle, pays, région, année
+(1966 à 2026), homologation.
+\end{itemize}
+Il n'y a pas de valeur manquante : l'absence d'information est codée \code{Unknown} (région de l'athlète
+inconnue dans 64\,\% des lignes). Aucune variable n'identifie l'athlète.
+
+\subsection{Ce que l'on peut prédire simplement}
+Le tableau~\ref{tab:references} prédit chaque total par la moyenne de son groupe, calculée sur d'autres
+lignes que celle prédite. La colonne $R^2 = 1 - \mathrm{RMSE}^2/\mathrm{Var}(y)$ donne la part de la dispersion
+des totaux que la prédiction explique : prédire tout le monde par la moyenne générale laisse toute la
+dispersion ($R^2 = 0$). Connaître le sexe, l'équipement et la catégorie de poids en explique déjà les deux
+tiers : l'erreur passe de 171 à 100\kg, et son carré de 29\,300 à 10\,100 (figure~\ref{fig:donnees}). Le tiers
+restant, ce sont les différences entre athlètes d'un même groupe ; c'est là que se joue le problème.
+
+\begin{tableau}\small
+\begin{tabular}{lcc}
+\toprule
+Prédiction & RMSE (kg) & $R^2$ \\
+\midrule
+Moyenne générale & 171,3 & 0 \\
+Moyenne par sexe & 128,3 & 0,44 \\
+Moyenne par sexe et catégorie de poids & 105,5 & 0,62 \\
+Moyenne par sexe, équipement et catégorie de poids & 100,3 & 0,66 \\
+Notre solution finale & 76,3 & 0,80 \\
+\bottomrule
+\end{tabular}\par\vspace{2pt}
+\legende{tab:references}{Prédictions de référence, sur les mêmes lignes et les mêmes plis que nos modèles
+(validation croisée sur 84\,000 lignes, section~\ref{sec:protocole}).}
+\end{tableau}
+
+\reportfig{fig_donnees}{fig:donnees}{À gauche, distribution du total. À droite, total selon le poids de
+corps (6\,000 athlètes tirés au hasard) et médiane par tranche de 5\kg.}
+
+% =====================================================================
+\section{Protocole de validation}\label{sec:protocole}
+Nous mettons de côté 21\,000 des 105\,000 lignes étiquetées comme \textbf{test interne}, mesuré une seule
+fois à la fin (il a servi à évaluer nos toutes premières versions, mais aucun réglage de la solution finale
+n'a été choisi en le regardant). Sur les 84\,000 autres lignes, chaque modèle est évalué en
+\textbf{validation croisée à 5 plis} : il apprend sur 67\,200 lignes et prédit les 16\,800 autres ; tous les
+modèles utilisent les mêmes plis. Les réglages sont choisis sur un découpage de ces 84\,000 lignes en
+63\,000 lignes d'apprentissage et 21\,000 de validation. Ce qui est ajusté sur les prédictions hors pli
+elles-mêmes (poids d'un mélange, correction de second niveau) est évalué en \textbf{validation croisée
+imbriquée} : pour mesurer l'erreur sur un pli, l'ajustement est refait sans aucune ligne de ce pli. Les écarts
+entre méthodes sont donnés avec un intervalle de confiance à 95\,\% (bootstrap apparié sur les lignes). Les
+modèles soumis sont réentraînés sur les 105\,000 lignes.
+
+% =====================================================================
+\section{Prétraitements}\label{sec:pretraitements}
+
+\begin{itemize}
+\item \textbf{Âges.} Les 18 âges inférieurs à 5 ans sont mis en valeur manquante. Les colonnes reprennent le
+format de la base publique OpenPowerlifting, où un âge en ,5 (48\,\% des lignes) signifie que seule l'année de
+naissance est connue : 19,5 veut dire « 19 ou 20 ans »~[16]. Nous en tirons un indicateur et une année de
+naissance estimée.
+\item \textbf{Catégories.} La modalité \code{Unknown} est gardée telle quelle : elle n'est pas due au hasard
+(région inconnue pour 95\,\% des athlètes hors des États-Unis, 28\,\% aux États-Unis).
+\item \textbf{Variables ajoutées.} Ridge et TabPFN reçoivent les 16 variables d'origine. TabM (24 colonnes) reçoit
+en plus la limite de la catégorie de poids, son caractère ouvert (\code{120+}) ou fermé, l'écart et le rapport
+entre le poids de corps et cette limite, l'année de naissance estimée, l'indicateur d'âge et les combinaisons
+pays\,|\,région. LightGBM (32 colonnes) et CatBoost (36) reçoivent en outre des croisements de catégories
+(sexe $\times$ équipement, fédération $\times$ année, etc.) et des indicateurs de précision de la pesée
+(poids au kilo, au demi-kilo ou au dixième près).
+\item \textbf{Cible ramenée à un poids de référence.} Sous similitude géométrique, la force est proportionnelle
+à la section des muscles, donc à la masse à la puissance $2/3$~[14]. Certains modèles apprennent $z = y/s$,
+avec $s = (b/80)^p$ et $b$ le poids de corps, puis prédisent $s\,\hat z$. Avec des poids d'apprentissage $s^2$,
+l'objectif reste exactement l'erreur quadratique en kilogrammes : $\sum_i s_i^2 (z_i - \hat z_i)^2 =
+\sum_i (y_i - s_i \hat z_i)^2$.
+\end{itemize}
+
+% =====================================================================
+\section{Les modèles individuels}\label{sec:modeles}
+
+\subsection{Régression Ridge}
+$\hat y = X\hat\beta$ avec $\hat\beta = \arg\min_\beta \|y - X\beta\|^2 + \alpha\|\beta\|^2$~[1], les catégories
+codées en indicatrices et les variables numériques standardisées. La pénalité change peu le résultat
+(86,1\kg{} pour $\alpha \in [1, 10]$, 86,6 pour $\alpha = 100$). La forme de la cible compte davantage. Ridge
+est additif : chaque variable ajoute un nombre fixe de kilogrammes, le même quel que soit le poids de corps.
+Or les écarts grandissent avec le poids : chez les hommes, les athlètes en \emph{Single-ply} soulèvent en
+moyenne 44\kg{} de plus que ceux en \emph{Raw} entre 55 et 70\kg{} de poids de corps, et 90\kg{} de plus
+entre 110 et 150\kg ; en proportion, l'écart reste presque constant (de +10 à +14\,\%). Avec la cible ramenée,
+l'objectif devient $\sum_i \big(y_i - s_i(\beta_0 + \beta^\top x_i)\big)^2 + \alpha\|\beta\|^2$ : c'est une régression
+Ridge sur les variables multipliées par $s$, où chaque effet devient proportionnel à $s$. L'erreur passe de
+86,6\kg{} ($p = 0$) à 84,4 ($p = 2/3$) et 83,9 ($p = 1$). Pour LightGBM, la même transformation ne change rien
+($+0{,}08$\kg, intervalle $[-0{,}02 ; 0{,}18]$) : un arbre peut couper sur le poids de corps et apprendre un
+effet différent dans chaque tranche.
+
+\subsection{Boosting d'arbres : LightGBM et CatBoost}
+LightGBM et CatBoost sont des boosting de gradient~[2] avec la perte quadratique : chaque arbre est ajusté aux
+résidus du modèle courant puis ajouté avec un taux $\eta < 1$ ; une pénalité $\lambda$ rapproche de zéro la
+valeur des feuilles qui contiennent peu de lignes~[3], et le nombre d'arbres est fixé par early stopping.
+
+\textbf{LightGBM}~[4] fait pousser les arbres feuille par feuille et traite les catégories directement. Pour
+mesurer l'effet de ses réglages, nous avons tiré au hasard 60 configurations de huit hyperparamètres (taille
+des arbres, nombre minimal de lignes par feuille, $\lambda$, fractions de lignes et de variables, seuils
+aléatoires, lissage des catégories, exposant $p$), chacune entraînée sur 63\,000 lignes avec $\eta = 0{,}05$,
+le nombre d'arbres étant fixé par early stopping sur les 21\,000 lignes de validation. Les 61 erreurs de
+validation (60 configurations tirées et notre configuration de départ : 127 feuilles, $\lambda = 10$)
+s'étalent de 77,8 à 78,9\kg, avec un écart-type de 0,26 (figure~\ref{fig:lgb}). Un seul réglage a un effet net : sous-échantillonner les
+lignes pour chaque arbre dégrade l'erreur (médiane 78,54\kg{} avec 70\,\% des lignes, 78,16 sans
+sous-échantillonnage). Réentraînées avec $\eta = 0{,}02$ et mesurées en validation croisée, la meilleure
+configuration (15 feuilles, $\lambda = 30$, 3\,974 arbres) et la configuration de départ (1\,035 arbres)
+obtiennent 78,10 et 78,11\kg, contre 78,23 pour la configuration de départ avec $\eta = 0{,}04$. Le gain
+vient donc du taux d'apprentissage ; les autres réglages ne se départagent qu'à quelques centièmes.
+
+\reportfig{fig_lightgbm_recherche}{fig:lgb}{Recherche aléatoire de 60 configurations de LightGBM
+(validation sur 21\,000 lignes). Chaque point est une configuration, le trait noir la médiane par valeur,
+les tirets orange la configuration de départ.}
+
+\textbf{CatBoost}~[5] utilise des arbres symétriques (tous les nœuds d'une même profondeur posent la même
+question) et code chaque catégorie par une moyenne lissée de la cible, calculée sur les seules lignes qui précèdent
+dans une permutation aléatoire. Parmi les configurations comparées sur la validation, la meilleure
+(profondeur 7, $\eta = 0{,}06$, $\lambda = 8$, $p = 1$, 3\,150 arbres) inclut une variable de contexte
+fédération\,|\,pays\,|\,région\,|\,année ; sans elle, l'erreur de validation passe de 78,18 à 78,30\kg.
+
+\subsection{TabM : un ensemble de réseaux dans un seul réseau}
+TabM~[6] entraîne simultanément $k$ perceptrons qui partagent l'essentiel de leurs poids et moyenne leurs
+prédictions. Chaque variable numérique est d'abord codée par morceaux~[7], ce qui permet au réseau de traiter
+différemment chaque plage de valeurs. Nous avons tiré 16 configurations (2 à
+4 couches de 256 à 512 neurones, $k = 16$ ou 32, taux de $5\cdot10^{-4}$ à $2\cdot10^{-3}$, dropout, nombre
+d'intervalles, pénalité des poids, exposant $p$), plus notre configuration de départ (3 couches de
+384 neurones, $k = 32$, 64 intervalles), chacune arrêtée après 20 époques sans progrès en validation. Les
+17 erreurs vont de 77,77 à 78,23\kg{} et la meilleure est la configuration de départ. Ces écarts sont de
+l'ordre de la variabilité d'entraînement : la même configuration, réentraînée avec 38 époques au lieu de
+40 et sur une autre carte graphique, donne 78,24\kg{} en validation croisée au lieu de 78,12, et sur le test
+interne deux entraînements donnent 78,16 et 79,04\kg. Pour TabM, moyenner plusieurs entraînements serait un
+meilleur usage du calcul qu'une recherche plus large.
+
+\subsection{TabPFN : un modèle préentraîné qui apprend dans le contexte}
+TabPFN~[8,9] est un transformer préentraîné une fois pour toutes, par ses auteurs, sur un très grand nombre de
+jeux de données simulés, à approcher la prédiction bayésienne de la cible de lignes à partir d'autres lignes
+étiquetées. Pour prédire, on lui donne nos lignes étiquetées \emph{en entrée}, avec les lignes à prédire ; ses
+paramètres ne changent pas. Il renvoie une loi pour $y$, dont nous prenons l'espérance. Nous utilisons la version 3.5 du modèle (bibliothèque \code{tabpfn} 9.1.0), avec les 16 variables
+d'origine et tout le contexte disponible (67\,200 lignes en validation croisée, 105\,000 pour le test).
+Le modèle est appliqué plusieurs fois à des présentations différentes des données (ordre des colonnes,
+prétraitements), puis on moyenne ; nous avons fait varier ce nombre de passages (paramètre \code{n\_estimators}) et la cible sur le pli 1.
+Passer de 1 à 4 passages réduit l'erreur de 0,30\kg, passer de 4 à 16 de 0,07, pour un temps de calcul
+proportionnel au nombre de passages. À nombre de passages égal, la cible ramenée au poids gagne 0,07 à
+0,09\kg. Nous retenons 8 passages et la cible ramenée ($p = 2/3$) : 77,08\kg{} en validation croisée avec
+4 passages et la cible en kilogrammes, 76,94 avec ce choix.
+
+\subsection{Comparaison}
+\begin{tableau}\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Modèle & Variables & Validation croisée & Test interne \\
+\midrule
+Ridge ($p = 1$) & 16 & 83,93 & 83,81 \\
+CatBoost & 36 & 78,40 & 78,32 \\
+LightGBM, configuration de départ & 32 & 78,23 & 78,10 \\
+LightGBM, meilleure configuration ($\eta = 0{,}02$) & 32 & 78,10 & 77,98 \\
+LightGBM, configuration de départ, 5 graines & 32 & 78,07 & 77,89 \\
+\code{HistGradientBoosting}, 5 graines & 54 & 78,26 & 78,01 \\
+TabM & 24 & 78,12 & 78,16 \\
+\textbf{TabPFN (8 passages, cible ramenée)} & 16 & \textbf{76,94} & \textbf{76,78} \\
+\bottomrule
+\end{tabular}\par\vspace{2pt}
+\legende{tab:individuels}{RMSE (kg) des modèles individuels. Validation croisée : mêmes cinq plis sur
+84\,000 lignes. Test interne : apprentissage sur les 84\,000 lignes, mesure sur les 21\,000 lignes mises de côté.}
+\end{tableau}
+
+La figure~\ref{fig:courbes} prédit les 16\,800 lignes du pli 1 en n'apprenant que sur une partie des
+67\,200 autres. Entre 30\,000 et 67\,200 lignes, Ridge ne gagne plus que 0,6\kg{} ; les trois autres modèles
+gagnent encore 1,8 à 2,0\kg{} et leurs courbes ne s'aplatissent pas, d'où l'intérêt de réentraîner les modèles
+finaux sur les 105\,000 lignes. LightGBM et TabM sont indiscernables à toutes les tailles. TabPFN est devant
+partout, mais son avance fond quand les données augmentent : 3,6 à 3,8\kg{} avec 1\,000 lignes, 1,4\kg{} avec
+67\,200 ; avec 1\,000 lignes, il fait aussi bien que Ridge avec 67\,200. Son avantage est de même nettement plus grand sur
+les profils rares (tableau~\ref{tab:rarete}). Nous l'interprétons comme l'effet de l'a priori appris au
+préentraînement, qui compte d'autant plus que les données sont rares.
+
+\reportfig[0.68\linewidth]{fig_courbes_apprentissage}{fig:courbes}{Erreur sur les 16\,800 lignes du pli 1
+selon le nombre de lignes d'apprentissage (sous-échantillons emboîtés).}
+
+\begin{tableau}\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Écart de RMSE avec TabPFN (kg) & LightGBM & CatBoost & TabM \\
+\midrule
+Profils rares : groupes de 1 à 4 lignes (8\,600 lignes) & +2,2 [1,6 ; 2,8] & +2,9 [2,3 ; 3,5] & +2,0 [1,3 ; 2,5] \\
+Profils fréquents : groupes de 500 lignes et plus & +0,6 [0,2 ; 1,0] & +0,2 [$-0{,}1$ ; 0,6] & +0,7 [0,4 ; 1,0] \\
+\bottomrule
+\end{tabular}\par\vspace{2pt}
+\legende{tab:rarete}{RMSE de chaque modèle moins RMSE de TabPFN (4 passages, cible en kg), avec intervalles à
+95\,\% ; un écart positif signifie que TabPFN fait mieux. Le groupe d'une ligne est sa combinaison
+sexe\,|\,équipement\,|\,catégorie\,|\,fédération, et sa taille est comptée sur les 84\,000 lignes.}
+\end{tableau}
+
+% =====================================================================
+\section{Où et pourquoi les modèles se trompent}\label{sec:erreurs}
+Les erreurs des six modèles de notre premier mélange ont des corrélations de 0,96 à 0,99 ; leurs
+prédictions ne s'écartent en moyenne que de 11\kg{} les unes des autres, pour une erreur absolue moyenne de
+58\kg. Les 5\,\% de lignes les plus mal prédites portent 35\,\% de la somme des carrés des erreurs. Sur
+les lignes où l'erreur du mélange dépasse deux fois sa RMSE (5\,\% des lignes), les six modèles se trompent
+tous dans le même sens : tous surestiment le total, ou tous le sous-estiment (83\,\% des lignes dans
+l'ensemble). Sur ces lignes, l'erreur de tout mélange à poids positifs de somme 1 est au moins égale, en
+valeur absolue, à la plus petite des six : combiner les modèles ne peut pas corriger ces grosses erreurs. Notons $X$ les variables d'une ligne et $f^*(X)=\mathbb{E}[Y\mid X]$. Pour toute prédiction
+$f(X)$ calculée à partir de ces seules variables, le terme croisé étant nul ($\mathbb{E}[Y-f^*(X)\mid X]=0$),
+\[\mathbb{E}\big[(Y-f(X))^2\big]=\mathbb{E}\big[(f^*(X)-f(X))^2\big]+\mathbb{E}\big[\operatorname{Var}(Y\mid X)\big].\]
+Le premier terme dépend du modèle ; le second, la dispersion des totaux entre lignes aux variables identiques,
+n'en dépend pas. Il est grand : trois hommes aux variables presque identiques (même fédération autrichienne,
+\emph{Raw}, catégorie 120\kg, même année, 27 à 30 ans, 107 à 113\kg{} de poids de corps) ont réalisé 777,5, 617,5 et 237,5\kg ; les six modèles
+leur prédisent tous entre 612 et 660\kg. Les prédictions sont par ailleurs bien calibrées (pente de la
+régression du total sur la prédiction entre 0,99 et 1,01 pour tous les modèles). Ce qui manque n'est donc pas
+un meilleur algorithme mais une information absente des variables de la ligne : le niveau propre de
+l'athlète. La borne $\mathbb{E}[\operatorname{Var}(Y\mid X)]$ ne vaut que pour une prédiction fondée sur les
+seules variables de la ligne ; la section~\ref{sec:appariement} la contourne en utilisant les totaux des autres
+lignes qui proviennent probablement du même athlète.
+
+% =====================================================================
+\section{Combiner les modèles}\label{sec:melange}
+Les poids d'un mélange des prédictions hors pli $\hat y_{ij}$ résolvent
+$\min_w \sum_i \big(y_i - \sum_j w_j \hat y_{ij}\big)^2$ sous $w_j \ge 0$, $\sum_j w_j = 1$ : c'est le stacking de
+Wolpert~[15] dans la forme de Breiman~[11], résolu par SLSQP~[12]. Avant le mélange, chaque prédiction est
+rapprochée du total moyen des lignes d'apprentissage \emph{identiques} sur les 16 variables, quand il en
+existe : $\hat y \leftarrow 0{,}25\,\hat y + 0{,}75\,\bar y_{\text{profil}}$. L'erreur quadratique d'un tel mélange
+est la moyenne pondérée des erreurs des modèles, diminuée de leur dispersion autour du mélange~[10]. Pour
+notre premier mélange de six modèles, en moyenne sur les lignes, cela donne $6\,015{,}3 - 124{,}9 = 5\,890{,}4$,
+soit 76,75\kg{} de RMSE. Des modèles aussi corrélés ne peuvent se compenser
+que marginalement ; pour deux modèles, le mélange ne bat le meilleur que si la corrélation de leurs erreurs
+est inférieure au rapport de leurs RMSE, la plus petite sur la plus grande~[13], et entre TabPFN et chaque autre modèle elle l'est de peu
+(0,967 à 0,972 contre 0,983 à 0,988).
+
+Évalué en validation imbriquée, ce mélange fait 76,76\kg ; trois changements le portent à 76,65\kg{} : la nouvelle version de
+TabPFN remplace l'ancienne ; les deux LightGBM sont moyennés sur 5 graines et un \code{HistGradientBoosting}
+entraîné sur 54 variables, dont des moyennes de la cible par cohorte, ajoute des erreurs un peu moins
+corrélées ; les poids diffèrent selon que le groupe de la ligne est rare ou fréquent (TabPFN reçoit 68\,\% du
+poids sur les profils rares, 51\,\% sur les fréquents), ce qu'appelle le tableau~\ref{tab:rarete}. Le mélange
+gagne ainsi 0,28\kg{} sur TabPFN seul, et dans chacun des cinq plis (de 0,20 à 0,40\kg{} selon le pli) : un gain réel, mais modeste.
+
+% =====================================================================
+\section{Correction par appariement}\label{sec:appariement}
+
+\subsection{Principe}
+Aucune variable n'identifie l'athlète, mais une ligne donne son sexe, son pays, sa région et son année de
+naissance, déduite de l'âge et de l'année de la compétition à un an près. Les lignes étiquetées qui partagent
+ces attributs, avec le même équipement et un poids de corps proche, ont de bonnes chances d'être
+\emph{celles du même athlète} à d'autres compétitions. C'est un problème d'appariement d'enregistrements
+(\emph{record linkage}~[17]) : nous ne savons pas quelles lignes concernent la même personne, mais nous
+pouvons apprendre à quel point il est probable qu'elles le fassent.
+
+Pour une ligne $i$ de prédiction $\hat y_i$, nous cherchons dans un réservoir de lignes étiquetées les
+\emph{candidates} $c$ de même sexe, pays, région et année de naissance compatible, puis appliquons six filtres
+de plus en plus stricts : aucun ; même équipement et poids à 10\,\% près ; poids à 5\,\% près et compétition à
+3 ans près ; poids à 3\,\% près et même fédération ; poids à 2\,\% près et compétition à un an près ; équipement
+différent. Pour chaque filtre, avec $n$ candidates, nous calculons
+\[
+d_c = y_c \Big(\frac{b_i}{b_c}\Big)^{2/3} - \hat y_i, \qquad
+m_\kappa = \frac{n}{n + \kappa}\cdot\frac1n \sum_c d_c \quad (\kappa \in \{0{,}5 ; 2 ; 8\}),
+\]
+l'écart moyen, rétréci vers zéro quand les candidates sont peu nombreuses, entre leur total ramené au poids de
+la ligne et la prédiction ; s'y ajoutent $\log(1+n)$, les écarts moyens de poids et d'année et la dispersion des
+$d_c$. Un LightGBM de second niveau (15 feuilles, 200 arbres, $\eta = 0{,}03$, au moins 300 lignes par feuille,
+moyenne de 5 graines) apprend l'erreur $y_i - \hat y_i$ à partir de ces 43 caractéristiques. Seuls les totaux
+réels des candidates et la prédiction de la ligne elle-même y entrent, comme pour une ligne de test. En
+validation croisée, pour évaluer un pli, le modèle de second niveau est entraîné sur les autres plis avec des
+caractéristiques calculées sans aucune ligne de ce pli, puis appliqué au pli avec pour réservoir les quatre
+autres. Pour le test, il est entraîné sur les 84\,000 lignes de développement, qui forment le réservoir.
+
+\subsection{Résultats}
+\begin{tableau}\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Prédiction corrigée & Avant & Après & Gain [IC 95\,\%] \\
+\midrule
+TabPFN seul & 76,91 & 76,55 & $-0{,}36$ [$-0{,}42$ ; $-0{,}31$] \\
+Mélange avec l'ancienne version de TabPFN & 76,69 & 76,29 & $-0{,}39$ [$-0{,}45$ ; $-0{,}34$] \\
+\textbf{Mélange retenu} & \textbf{76,64} & \textbf{76,27} & $\mathbf{-0{,}37}$ [$-0{,}43$ ; $-0{,}32$] \\
+\bottomrule
+\end{tabular}\par\vspace{2pt}
+\legende{tab:appariement}{RMSE (kg) en validation croisée sur 84\,000 lignes ; « Après » est évalué en validation
+imbriquée. Le gain est positif dans chacun des cinq plis.}
+\end{tableau}
+
+Le gain est presque le même quelle que soit la prédiction corrigée : la correction n'exploite pas la diversité
+des modèles, elle apporte une information qu'aucun n'avait. Plusieurs analyses indiquent qu'il s'agit bien de
+l'historique de l'athlète. Avec les seules candidates de même génération et de même région, sans condition
+d'équipement ni de poids, le gain est nul ($-0{,}03$ [$-0{,}07$ ; 0,01]) ; avec les seules candidates proches
+(même équipement, poids proche), il atteint $-0{,}32$. Le gain croît avec l'âge : 0,07\kg{} avant 24 ans, 1,50\kg{}
+après 50 ans (figure~\ref{fig:appariement}). Exemple : un homme de 68 ans, 92,6\kg, \emph{Single-ply}, fédération
+anglaise EPA, a réalisé 672,5\kg{} en 2019 ; le mélange lui prédisait 518\kg. Trois candidates (58, 60 et 64 ans,
+91,9 à 92,7\kg, \emph{Single-ply}, fédérations EPA et BP, 2009 à 2016) ont réalisé 690 à 712,5\kg, et la correction
+porte la prédiction à 582\kg. Elle se trompe aussi : un homme de 54 ans et 122,9\kg{} a réalisé 645\kg{} quand ses
+deux candidates les plus proches avaient fait 872,5 et 907,5\kg, et sa prédiction passe de 736 à 810\kg.
+
+\textbf{Quand faire confiance aux candidates.} Une candidate n'est pas forcément le même athlète. La
+figure~\ref{fig:appariement} donne, par filtre et par taille de cohorte (nombre de lignes de même sexe, pays,
+région et année de naissance), la pente de la régression de l'erreur du mélange sur l'écart moyen des
+candidates à la prédiction : 1 si cet écart se retrouvait en moyenne tout entier dans l'erreur, 0 si les
+candidates n'apportaient rien. La pente vaut 0,47 pour des candidates à 2\,\% du poids et à un an près dans une
+cohorte de 1 à 3 personnes, et 0,00 à 0,03 dans les cohortes de plus de 50 personnes, où les candidates sont
+presque toujours d'autres athlètes. C'est la logique de l'appariement probabiliste~[17] : un accord sur des
+attributs rares pèse plus qu'un accord sur des attributs fréquents. Le modèle de second niveau apprend cette
+pondération ; sur le mélange avec l'ancienne version de TabPFN, une régression linéaire sur les mêmes
+caractéristiques ne gagne que 0,29\kg, contre 0,37 à 0,39 pour LightGBM, XGBoost, CatBoost ou
+\code{HistGradientBoosting}. Enfin, donner directement à LightGBM les
+totaux des candidates, leur nombre et leur proximité, en plus de ses 32 variables, ne réduit son erreur que de
+0,08\kg{} (intervalle $[-0{,}22 ; 0{,}05]$) : l'information est mieux exploitée comme correction d'une
+prédiction que comme variable d'entrée.
+
+\reportfig{fig_appariement}{fig:appariement}{À gauche, pente de l'erreur du mélange sur l'écart moyen des
+candidates à la prédiction, par filtre et taille de cohorte (candidates prises dans les autres plis ; « l. » :
+nombre de lignes). À droite, baisse de la RMSE apportée par la correction, par âge.}
+
+% =====================================================================
+\section{Résultats et soumissions retenues}\label{sec:resultats}
+
+\begin{tableau}\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Solution & Validation croisée & Test interne & Public \\
+\midrule
+TabPFN seul & 76,94 & 76,78 & 76,42 \\
+TabPFN + correction par appariement & 76,55 & 76,08 & 75,86 \\
+\textbf{Mélange + correction par appariement (solution finale)} & \textbf{76,27} & \textbf{75,83} & \textbf{75,65} \\
+\bottomrule
+\end{tabular}\par\vspace{2pt}
+\legende{tab:soumissions}{RMSE (kg). Validation croisée sur 84\,000 lignes (imbriquée pour la correction) ; test
+interne : tout est ajusté sur les 84\,000 lignes et mesuré une fois sur les 21\,000 autres ; public : environ
+13\,500 lignes du test Kaggle.}
+\end{tableau}
+
+Sur le test interne, la solution finale fait 0,95\kg{} de moins que TabPFN seul (intervalle $[0{,}79 ; 1{,}11]$) :
+le mélange en apporte 0,27 (76,50\kg{} avant correction) et la correction 0,68 ($[0{,}55 ; 0{,}80]$). La
+correction y rapporte presque deux fois plus qu'en validation croisée, où le modèle de second niveau apprend
+sur 67\,200 lignes et cherche ses candidates parmi 67\,200 lignes, contre 84\,000 ici. En ne gardant comme
+réservoir qu'une partie des 84\,000 lignes, tirée au hasard, le gain sur le test interne vaut 0,23\kg{} avec
+33\,600 lignes, 0,45 avec 50\,400, 0,59 avec 67\,200 et 0,68 avec 84\,000 : plus on connaît de participations,
+plus on a de chances d'y retrouver l'athlète. Nous avons donc soumis une variante dont le réservoir contient les
+105\,000 lignes étiquetées. Sur le classement public, elle est à égalité avec la solution finale (75,650 contre
+75,651\kg) : si l'effet existe sur le test Kaggle, il est trop petit pour être vu sur 13\,500 lignes. Nous
+retenons ces deux soumissions pour le classement final.
+
+% =====================================================================
+\section{Conclusion}
+Sur ce problème, l'information compte plus que l'algorithme. Les modèles individuels se distinguent surtout
+sur les profils rares, où le préentraînement de TabPFN fait la différence ; les réglages de LightGBM et de TabM
+ne se départagent qu'à quelques centièmes ou dans le bruit d'entraînement, et tous les modèles butent sur la
+même limite, le niveau propre de l'athlète. Les combiner rapporte peu, ce que leurs corrélations expliquent.
+Retrouver dans les données les participations probables du même athlète rapporte plus que le mélange
+(0,37 contre 0,28\kg{} en validation croisée, 0,68 contre 0,27\kg{} sur le test interne).
+
+\textbf{Limites.} La correction repose sur des identités probables : elle se trompe quand deux athlètes
+partagent les mêmes attributs, ou quand un athlète réalise une performance inhabituelle. Les poids du mélange
+et les réglages de la correction ont été choisis sur les 84\,000 lignes de développement ; le test interne en
+donne une mesure indépendante. Enfin, sans identifiant d'athlète, nous ne savons pas mesurer la précision sur
+des athlètes entièrement nouveaux.
+
+% =====================================================================
+{\small
+\section*{Références}
+\begin{enumerate}[label={[\arabic*]},leftmargin=2.2em]
+\item A.\,E.~Hoerl, R.\,W.~Kennard. Ridge regression: biased estimation for nonorthogonal problems. \emph{Technometrics} 12(1), 1970.
+\item J.\,H.~Friedman. Greedy function approximation: a gradient boosting machine. \emph{Annals of Statistics} 29(5), 2001.
+\item T.~Chen, C.~Guestrin. XGBoost: a scalable tree boosting system. \emph{KDD}, 2016.
+\item G.~Ke et al. LightGBM: a highly efficient gradient boosting decision tree. \emph{NeurIPS}, 2017.
+\item L.~Prokhorenkova et al. CatBoost: unbiased boosting with categorical features. \emph{NeurIPS}, 2018.
+\item Y.~Gorishniy, A.~Kotelnikov, A.~Babenko. TabM: advancing tabular deep learning with parameter-efficient ensembling. \emph{ICLR}, 2025.
+\item Y.~Gorishniy, I.~Rubachev, A.~Babenko. On embeddings for numerical features in tabular deep learning. \emph{NeurIPS}, 2022.
+\item S.~Müller, N.~Hollmann, S.~Pineda Arango, J.~Grabocka, F.~Hutter. Transformers can do Bayesian inference. \emph{ICLR}, 2022.
+\item N.~Hollmann et al. Accurate predictions on small data with a tabular foundation model. \emph{Nature} 637, 2025.
+\item A.~Krogh, J.~Vedelsby. Neural network ensembles, cross validation, and active learning. \emph{NIPS 7}, 1995.
+\item L.~Breiman. Stacked regressions. \emph{Machine Learning} 24(1), 1996.
+\item D.~Kraft. A software package for sequential quadratic programming. DFVLR-FB 88-28, 1988.
+\item J.\,M.~Bates, C.\,W.\,J.~Granger. The combination of forecasts. \emph{Operational Research Quarterly} 20(4), 1969.
+\item G.~Marković, D.~Sekulić. Modeling the influence of body size on weightlifting and powerlifting performance. \emph{Collegium Antropologicum} 30(3), 2006.
+\item D.\,H.~Wolpert. Stacked generalization. \emph{Neural Networks} 5(2), 1992.
+\item OpenPowerlifting, bibliothèque \code{opltypes} 0.2.0, \code{src/age.rs}. \url{https://docs.rs/crate/opltypes/0.2.0/source/src/age.rs}
+\item I.\,P.~Fellegi, A.\,B.~Sunter. A theory for record linkage. \emph{Journal of the American Statistical Association} 64(328), 1969.
+\end{enumerate}
+\par}
+
+\end{document}
